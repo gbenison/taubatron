@@ -1,0 +1,22 @@
+
+
+Find a connecting path between word A and word B,
+using a number of intermediate words.
+
+
+chair
+hair
+pair
+par
+pad
+pod
+plod
+
+
+The usual rules for connections between words are:
+
+1) word 1 is connected to word 2 if they are the same length
+   and differ by only one letter.
+2) If word 2 can be formed by deleting one letter from
+   word 1, they are connected.
+
