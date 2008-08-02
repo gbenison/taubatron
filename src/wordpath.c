@@ -31,33 +31,100 @@ string_shorten(char* str, int idx)
     str[i] = str[i + 1];
 }
 
+/*
+ * Returns:
+ * A copy of 'src', filtered to contain only
+ * words of length greater than 'idx',
+ * with character 'idx' deleted
+ */
+static GList*
+map_words_delete(GList *src, gint idx)
+{
+  GList *result = NULL;
+  GList *cur;
+  for (cur = src; cur != NULL; cur = cur->next)
+    {
+      word_t *word = (word_t*)(cur->data);
+      if (strlen(word->chars) > idx)
+	{
+	  word_t *deletion = word_copy(word);
+	  result = g_list_append(result, deletion);
+	  string_shorten(deletion->chars, idx);
+	}
+    }
+  return result;
+}
+
+
+/*
+ * Add an edge to 'graph' for every pair of words (A, B) in 'dict'
+ * satisfying the property: B can be formed by deleting exactly one
+ * letter from A.
+ */
+static void
+apply_deletion_rule(dictionary_t *dict, igraph_t *graph)
+{
+  GList *all_words = NULL;
+  dictionary_for_each (dict, (DictionaryCallback)copy_words_cb, &all_words);
+  all_words = g_list_sort(all_words, (GCompareFunc)alphabetize);
+
+  gint delete_idx = 0;
+  while (1)
+    {
+      GList *deletions = map_words_delete(all_words, delete_idx);
+
+      if (g_list_length(deletions) == 0)
+	break;
+
+      /* sort the deletion list */
+      deletions = g_list_sort(deletions, (GCompareFunc)alphabetize);
+
+      /* perform the comparisons */
+      GList *A = all_words;
+      GList *B = deletions;
+      while (1)
+	{
+	  if (A == NULL)
+	    break;
+	  if (B == NULL)
+	    break;
+
+	  word_t *A_word = (word_t*)(A->data);
+	  word_t *B_word = (word_t*)(B->data);
+
+	  int relation = strcmp(A_word->chars, B_word->chars);
+
+	  if (relation == 0)
+	    {
+	      igraph_add_edge(graph, A_word->id, B_word->id);
+	      B = B->next;
+	    }
+	  else if (relation > 0) /* A greater */
+	    B = B->next;
+	  else if (relation < 0) /* B greater */
+	    A = A->next;
+	}
+
+      g_list_free(deletions);
+      delete_idx++;
+    }
+}
+
+/*
+ * Add an edge to 'graph' for every pair of words (A, B) in 'dict'
+ * satisfying the property: B can be formed by changing exactly one
+ * letter of A.
+ */
 static void
 apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
 {
-  /*
-   * A copy of the dictionary with one letter deleted from
-   * each word, and the same ID's.
-   */
-
   GList *all_words = NULL;
   dictionary_for_each (dict, (DictionaryCallback)copy_words_cb, &all_words);
 
   gint delete_idx = 0;
   while (1)
     {
-      GList *deletions = NULL;
-
-      GList *cur;
-      for (cur = all_words; cur != NULL; cur = cur->next)
-	{
-	  word_t *word = (word_t*)(cur->data);
-	  if (strlen(word->chars) > delete_idx)
-	    {
-	      word_t *deletion = word_copy(word);
-	      deletions = g_list_append(deletions, deletion);
-	      string_shorten(deletion->chars, delete_idx);
-	    }
-	}
+      GList *deletions = map_words_delete(all_words, delete_idx);
 
       if (g_list_length(deletions) == 0)
 	break;
@@ -66,7 +133,7 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
       deletions = g_list_sort(deletions, (GCompareFunc)alphabetize);
 
       /* report matches */
-      cur = deletions;
+      GList *cur = deletions;
       while (cur != NULL)
 	{
 	  GList *head = cur->next;
@@ -140,9 +207,11 @@ main(int argc, char *argv[])
   int n_vertices = dictionary_get_max_id(dict) + 1;
   igraph_empty(&graph, n_vertices, FALSE);
 
-  /* apply the rule */
+  /* apply the rules */
   apply_substitution_rule(dict, &graph);
-  g_printf("Graph contains %d edges\n", (int)(igraph_ecount(&graph)));
+  g_printf("Graph contains %d edges from substitution\n", (int)(igraph_ecount(&graph)));
+  apply_deletion_rule(dict, &graph);
+  g_printf("Graph contains %d edges, subst. + deletion\n", (int)(igraph_ecount(&graph)));
 
   /* look up target words in the dictionary */
   word_t *word_A = dictionary_lookup_chars_check(dict, chars_A);
