@@ -19,6 +19,16 @@
 
 #include "dictionary.h"
 
+word_t*
+word_copy (word_t *src)
+{
+  word_t *result = g_new0(word_t, 1);
+  result->chars = g_strdup(src->chars);
+  result->id = src->id;
+
+  return result;
+}
+
 struct _dictionary
 {
   GList *words;
@@ -42,6 +52,27 @@ dictionary_append(dictionary_t* dict, gchar* word)
   dict->words = g_list_append(dict->words, entry);
 }
 
+void
+dictionary_for_each     (dictionary_t *dict,
+			 DictionaryCallback cb,
+			 gpointer data)
+{
+  GList *cur = NULL;
+  for (cur = dict->words; cur != NULL; cur = cur->next)
+    cb((word_t*)(cur->data), data);
+}
 
+/*
+ * Return the word in 'dict' matching 'id'
+ */
+word_t*
+dictionary_lookup_id(dictionary_t* dict, guint id)
+{
+  GList *cur;
+  for (cur = dict->words; cur != NULL; cur = cur->next)
+    if (((word_t*)(cur->data))->id == id)
+      return (word_t*)(cur->data);
+  return NULL;
+}
 
 

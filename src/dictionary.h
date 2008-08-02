@@ -30,6 +30,8 @@ typedef struct _dictionary dictionary_t;
 
 typedef void (*DictionaryCallback) (word_t *word, gpointer data);
 
+word_t* word_copy               (word_t *src);
+
 dictionary_t* dictionary_new    (void);
 word_t* dictionary_append       (dictionary_t* dict, gchar* word);
 word_t* dictionary_lookup_chars (dictionary_t* dict, gchar* word);
