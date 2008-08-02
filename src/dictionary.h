@@ -36,6 +36,7 @@ dictionary_t* dictionary_new    (void);
 word_t* dictionary_append       (dictionary_t* dict, gchar* word);
 word_t* dictionary_lookup_chars (dictionary_t* dict, gchar* word);
 word_t* dictionary_lookup_id    (dictionary_t* dict, guint id);
+gint    dictionary_get_max_id   (dictionary_t* dict);
 void    dictionary_for_each     (dictionary_t*,
 				 DictionaryCallback cb,
 				 gpointer data);

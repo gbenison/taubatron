@@ -102,10 +102,32 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
  *
  */
 
+char *chars_A = NULL;
+char *chars_B = NULL;
+
+/*
+ * Abort with error if
+ * dictionary_lookup_chars(dict, chars) fails
+ */
+static word_t*
+dictionary_lookup_chars_check(dictionary_t *dict, gchar *chars)
+{
+  word_t *result = dictionary_lookup_chars(dict, chars);
+  if (result == NULL)
+    g_error("The word '%s' is not in the dictionary, sorry\n", chars);
+
+  return result;
+}
 
 int
 main(int argc, char *argv[])
 {
+  if (argc != 3)
+    g_error("Usage:\n%s <word-1> <word-2>\n", argv[0]);
+
+  chars_A = argv[1];
+  chars_B = argv[2];
+
   dictionary_t *dict = dictionary_new();
 
   /* populate the dictionary with words */
@@ -118,11 +140,25 @@ main(int argc, char *argv[])
   int n_vertices = dictionary_get_max_id(dict) + 1;
   igraph_empty(&graph, n_vertices, FALSE);
 
-  /* apply the rule, showing matches    */
+  /* apply the rule */
   apply_substitution_rule(dict, &graph);
   g_printf("Graph contains %d edges\n", (int)(igraph_ecount(&graph)));
 
-  /* FIXME */
+  /* look up target words in the dictionary */
+  word_t *word_A = dictionary_lookup_chars_check(dict, chars_A);
+  word_t *word_B = dictionary_lookup_chars_check(dict, chars_B);
+
+  g_assert(word_A != NULL);
+  g_assert(word_B != NULL);
+
+  /* report number of paths */
+  igraph_integer_t result;
+  int err = igraph_edge_disjoint_paths (&graph,
+					&result,
+					(igraph_integer_t)(word_A->id),
+					(igraph_integer_t)(word_B->id));
+
+  g_printf("Found %d paths from %s --> %s\n", (int)result, word_A->chars, word_B->chars);
 
   return 0;
 

@@ -75,6 +75,21 @@ dictionary_lookup_id(dictionary_t* dict, guint id)
   return NULL;
 }
 
+/*
+ * Return the word in 'dict' matching 'chars'
+ */
+word_t*
+dictionary_lookup_chars (dictionary_t* dict, gchar* chars)
+{
+  if (chars == NULL) return NULL;
+  GList *cur;
+  for (cur = dict->words; cur != NULL; cur = cur->next)
+    if (strcmp (((word_t*)(cur->data))->chars, chars) == 0)
+      return (word_t*)(cur->data);
+  return NULL;
+}
+
+
 gint
 dictionary_get_max_id (dictionary_t* dict)
 {
