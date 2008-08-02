@@ -75,4 +75,14 @@ dictionary_lookup_id(dictionary_t* dict, guint id)
   return NULL;
 }
 
+gint
+dictionary_get_max_id (dictionary_t* dict)
+{
+  gint result = 0;
+  GList *cur;
+  for (cur = dict->words; cur != NULL; cur = cur->next)
+    if (((word_t*)(cur->data))->id > result)
+      result = ((word_t*)(cur->data))->id;
+  return result;
+}
 

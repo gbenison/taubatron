@@ -1,6 +1,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include <igraph.h>
 #include "dictionary.h"
 #include "rule.h"
 
@@ -31,7 +32,7 @@ string_shorten(char* str, int idx)
 }
 
 static void
-apply_substitution_rule(dictionary_t *dict)
+apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
 {
   /*
    * A copy of the dictionary with one letter deleted from
@@ -78,10 +79,7 @@ apply_substitution_rule(dictionary_t *dict)
 	      if (strcmp(cur_word->chars, head_word->chars) != 0)
 		break;
 
-	      word_t *word_1 = dictionary_lookup_id(dict, cur_word->id);
-	      word_t *word_2 = dictionary_lookup_id(dict, head_word->id);
-
-	      g_printf("%s %s\n", word_1->chars, word_2->chars);
+	      igraph_add_edge(graph, cur_word->id, head_word->id);
 
 	      head = head->next;
 	    }
@@ -93,6 +91,18 @@ apply_substitution_rule(dictionary_t *dict)
     }
 }
 
+/*
+ * FIXME
+ * istructions for dumpig a graph
+
+	      word_t *word_1 = dictionary_lookup_id(dict, cur_word->id);
+	      word_t *word_2 = dictionary_lookup_id(dict, head_word->id);
+
+	      g_printf("%s %s\n", word_1->chars, word_2->chars);
+ *
+ */
+
+
 int
 main(int argc, char *argv[])
 {
@@ -103,8 +113,14 @@ main(int argc, char *argv[])
   for (cur = mie_words; *cur != NULL; ++cur)
     dictionary_append (dict, *cur);
 
+  /* Initialize the graph */
+  igraph_t graph;
+  int n_vertices = dictionary_get_max_id(dict) + 1;
+  igraph_empty(&graph, n_vertices, FALSE);
+
   /* apply the rule, showing matches    */
-  apply_substitution_rule(dict);
+  apply_substitution_rule(dict, &graph);
+  g_printf("Graph contains %d edges\n", (int)(igraph_ecount(&graph)));
 
   /* FIXME */
 
