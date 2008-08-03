@@ -78,6 +78,10 @@ apply_deletion_rule(dictionary_t *dict, igraph_t *graph)
       if (g_list_length(deletions) == 0)
 	break;
 
+      igraph_vector_t edge_vector;
+      igraph_vector_init(&edge_vector, 2 * g_list_length(deletions));
+      int vector_idx = 0;
+
       /* sort the deletion list */
       deletions = g_list_sort(deletions, (GCompareFunc)alphabetize);
 
@@ -98,7 +102,11 @@ apply_deletion_rule(dictionary_t *dict, igraph_t *graph)
 
 	  if (relation == 0)
 	    {
-	      igraph_add_edge(graph, A_word->id, B_word->id);
+	      VECTOR(edge_vector)[vector_idx] = A_word->id;
+	      ++vector_idx;
+	      VECTOR(edge_vector)[vector_idx] = B_word->id;
+	      ++vector_idx;
+
 	      B = B->next;
 	    }
 	  else if (relation > 0) /* A greater */
@@ -107,6 +115,10 @@ apply_deletion_rule(dictionary_t *dict, igraph_t *graph)
 	    A = A->next;
 	}
 
+      igraph_vector_resize(&edge_vector, (long int)vector_idx);
+      igraph_add_edges(graph, &edge_vector, 0);
+
+      igraph_vector_destroy(&edge_vector);
       g_list_free(deletions);
       delete_idx++;
     }
@@ -134,6 +146,10 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
       /* sort the deletion list */
       deletions = g_list_sort(deletions, (GCompareFunc)alphabetize);
 
+      igraph_vector_t edge_vector;
+      igraph_vector_init(&edge_vector, 2 * g_list_length(deletions));
+      int vector_idx = 0;
+
       /* report matches */
       GList *cur = deletions;
       while (cur != NULL)
@@ -148,13 +164,20 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
 	      if (strcmp(cur_word->chars, head_word->chars) != 0)
 		break;
 
-	      igraph_add_edge(graph, cur_word->id, head_word->id);
+	      VECTOR(edge_vector)[vector_idx] = cur_word->id;
+	      ++vector_idx;
+	      VECTOR(edge_vector)[vector_idx] = head_word->id;
+	      ++vector_idx;
 
 	      head = head->next;
 	    }
 	  cur = head;
 	}
 
+      igraph_vector_resize(&edge_vector, (long int)vector_idx);
+      igraph_add_edges(graph, &edge_vector, 0);
+
+      igraph_vector_destroy(&edge_vector);
       g_list_free(deletions);
       delete_idx++;
     }
@@ -162,7 +185,7 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
 
 /*
  * FIXME
- * istructions for dumpig a graph
+ * instructions for dumping a graph
 
 	      word_t *word_1 = dictionary_lookup_id(dict, cur_word->id);
 	      word_t *word_2 = dictionary_lookup_id(dict, head_word->id);
@@ -201,7 +224,7 @@ main(int argc, char *argv[])
 
   /* populate the dictionary with words */
   gchar **cur;
-  for (cur = alice_words; *cur != NULL; ++cur)
+  for (cur = en_words; *cur != NULL; ++cur)
     dictionary_append (dict, *cur);
 
   /* Initialize the graph */
