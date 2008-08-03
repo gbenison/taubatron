@@ -74,6 +74,9 @@ igraph_connection(const igraph_t *graph,
 	  if (igraph_vector_contains(connection, (igraph_real_t)vertex))
 	    continue;
 
+	  if (vertex == s)
+	    continue;
+
 	  /* done if vertex == t */
 	  if (vertex == t)
 	    {

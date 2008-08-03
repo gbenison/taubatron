@@ -1483,5 +1483,6 @@ gchar *mie_words[] =
 "xray",
 "years",
 "yellow",
-"yet"
+    "yet",
+NULL
   };
