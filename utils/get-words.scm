@@ -5,7 +5,7 @@
 
 (use-modules (ice-9 rdelim)
 	     (srfi srfi-1))
-(debug-set! stack 100000)
+(debug-set! stack 1000000)
 
 (define infile (open-input-file (cadr (command-line))))
 

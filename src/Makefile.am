@@ -8,5 +8,6 @@ wordpath_SOURCES=dictionary.c dictionary.h \
                  rule.c rule.h \
                  wordpath.c \
                  mie-dict.c \
+	         alice-dict.c \
                  en-dict.c
 

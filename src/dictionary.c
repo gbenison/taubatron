@@ -49,7 +49,7 @@ dictionary_append(dictionary_t* dict, gchar* word)
   entry->chars = g_strdup(word);
   ++id;
 
-  dict->words = g_list_append(dict->words, entry);
+  dict->words = g_list_prepend(dict->words, entry);
 }
 
 void

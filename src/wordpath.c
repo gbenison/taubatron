@@ -6,6 +6,8 @@
 #include "rule.h"
 
 extern gchar* mie_words[];
+extern gchar* en_words[];
+extern gchar* alice_words[];
 
 void
 copy_words_cb(word_t *word, GList **dest)
@@ -48,7 +50,7 @@ map_words_delete(GList *src, gint idx)
       if (strlen(word->chars) > idx)
 	{
 	  word_t *deletion = word_copy(word);
-	  result = g_list_append(result, deletion);
+	  result = g_list_prepend(result, deletion);
 	  string_shorten(deletion->chars, idx);
 	}
     }
@@ -199,7 +201,7 @@ main(int argc, char *argv[])
 
   /* populate the dictionary with words */
   gchar **cur;
-  for (cur = mie_words; *cur != NULL; ++cur)
+  for (cur = alice_words; *cur != NULL; ++cur)
     dictionary_append (dict, *cur);
 
   /* Initialize the graph */
