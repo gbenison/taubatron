@@ -7,4 +7,5 @@ AM_LDFLAGS=@GLIB_LIBS@ @IGRAPH_LIBS@
 wordpath_SOURCES=dictionary.c dictionary.h \
                  rule.c rule.h \
                  wordpath.c \
-                 mie-dict.c
+                 mie-dict.c \
+                 connection.c connection.h

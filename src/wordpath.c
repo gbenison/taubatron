@@ -3,6 +3,7 @@
 #include <string.h>
 #include <igraph.h>
 #include "dictionary.h"
+#include "connection.h"
 #include "rule.h"
 
 extern gchar* mie_words[];
@@ -228,6 +229,22 @@ main(int argc, char *argv[])
 					(igraph_integer_t)(word_B->id));
 
   g_printf("Found %d paths from %s --> %s\n", (int)result, word_A->chars, word_B->chars);
+
+  /* report the actual path */
+  igraph_vector_t path;
+  igraph_connection(&graph,
+		    (igraph_integer_t)(word_A->id),
+		    (igraph_integer_t)(word_B->id),
+		    &path);
+  int i;
+  for (i = 0; ; ++i)
+    {
+      igraph_integer_t vertex = igraph_vector_e(&path, i);
+      word_t *word = dictionary_lookup_id(dict, vertex);
+      if (word == NULL)
+	break;
+      g_printf(" %s\n", word->chars);
+    }
 
   return 0;
 

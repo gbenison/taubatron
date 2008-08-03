@@ -12,6 +12,8 @@
 
 gchar *mie_words[] =
   {
+    "bike",
+    "bake",
 "ability",
 "able",
 "about",
