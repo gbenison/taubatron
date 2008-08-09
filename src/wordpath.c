@@ -9,7 +9,52 @@ extern gchar* mie_words[];
 extern gchar* en_words[];
 extern gchar* alice_words[];
 
-void
+/*
+ * edge_collector
+ */
+
+struct _edge_collector
+{
+  igraph_vector_t edge_vector;
+  int n_edges;
+};
+typedef struct _edge_collector edge_collector_t;
+
+static edge_collector_t*
+edge_collector_new(int n_edges)
+{
+  edge_collector_t *result = g_new0(edge_collector_t, 1);
+  igraph_vector_init(&(result->edge_vector), 2 * n_edges);
+  result->n_edges = 0;
+  return result;
+}
+
+static void
+edge_collector_push(edge_collector_t *edge_collector,
+		    igraph_integer_t A,
+		    igraph_integer_t B)
+{
+  int idx = edge_collector->n_edges * 2;
+  VECTOR(edge_collector->edge_vector)[idx] = A;
+  VECTOR(edge_collector->edge_vector)[idx + 1] = B;
+  ++edge_collector->n_edges;
+}
+
+static void
+edge_collector_send_to_graph(edge_collector_t *edge_collector, igraph_t *graph)
+{
+  igraph_vector_resize(&(edge_collector->edge_vector),
+		       edge_collector->n_edges * 2);
+  igraph_add_edges(graph, &(edge_collector->edge_vector), 0);
+}
+
+static void
+edge_collector_finalize(edge_collector_t *self)
+{
+  /* FIXME leak */
+}
+
+static void
 copy_words_cb(word_t *word, GList **dest)
 {
   *dest = g_list_prepend(*dest, word_copy(word));
@@ -57,6 +102,63 @@ map_words_delete(GList *src, gint idx)
   return result;
 }
 
+/*
+ * Re-order the letters of 'word' such that they're alphabetized.
+ */
+static void
+letter_sort_cb(word_t *word, gpointer data)
+{
+  /* in-place bubble-sort the word */
+  int n_chars = strlen(word->chars);
+  int i;
+  for (i = 0; i < n_chars; ++i)
+    {
+      int j;
+      for (j = i; j < n_chars - 1; ++j)
+	if (word->chars[j + 1] < word->chars[j])
+	  {
+	    gchar tmp = word->chars[j];
+	    word->chars[j] = word->chars[j + 1];
+	    word->chars[j + 1] = tmp;
+	  }
+    }
+}
+
+/*
+ * Add an edge to 'graph' for every pair of words (A, B) in 'dict'
+ * satisfying the property:
+ * B is an anagram of A.
+ */
+static void
+apply_anagram_rule(dictionary_t *dict, igraph_t *graph)
+{
+  GList *all_words = NULL;
+  dictionary_for_each (dict, (DictionaryCallback)copy_words_cb, &all_words);
+  g_list_foreach(all_words, (GFunc)letter_sort_cb, NULL);
+  all_words = g_list_sort(all_words, (GCompareFunc)alphabetize);
+
+  /* duplicates are matches */
+  edge_collector_t *edge_collector =
+    edge_collector_new(g_list_length(all_words));
+  GList *cur;
+  for (cur = all_words; cur != NULL; cur = cur->next)
+    {
+      word_t *cur_word = cur->data;
+      GList *head;
+      for (head = cur->next; head != NULL; head = head->next)
+	{
+	  word_t *head_word = head->data;
+	  if (strcmp(head_word->chars, cur_word->chars) != 0)
+	    break;
+	  edge_collector_push(edge_collector, cur_word->id, head_word->id);
+	}
+    }
+  edge_collector_send_to_graph(edge_collector, graph);
+  edge_collector_finalize(edge_collector);
+
+  /* FIXME free word objects */
+  g_list_free(all_words);
+}
 
 /*
  * Add an edge to 'graph' for every pair of words (A, B) in 'dict'
@@ -78,9 +180,8 @@ apply_deletion_rule(dictionary_t *dict, igraph_t *graph)
       if (g_list_length(deletions) == 0)
 	break;
 
-      igraph_vector_t edge_vector;
-      igraph_vector_init(&edge_vector, 2 * g_list_length(deletions));
-      int vector_idx = 0;
+      edge_collector_t *edge_collector =
+	edge_collector_new(g_list_length(deletions));
 
       /* sort the deletion list */
       deletions = g_list_sort(deletions, (GCompareFunc)alphabetize);
@@ -102,11 +203,7 @@ apply_deletion_rule(dictionary_t *dict, igraph_t *graph)
 
 	  if (relation == 0)
 	    {
-	      VECTOR(edge_vector)[vector_idx] = A_word->id;
-	      ++vector_idx;
-	      VECTOR(edge_vector)[vector_idx] = B_word->id;
-	      ++vector_idx;
-
+	      edge_collector_push(edge_collector, A_word->id, B_word->id);
 	      B = B->next;
 	    }
 	  else if (relation > 0) /* A greater */
@@ -115,10 +212,9 @@ apply_deletion_rule(dictionary_t *dict, igraph_t *graph)
 	    A = A->next;
 	}
 
-      igraph_vector_resize(&edge_vector, (long int)vector_idx);
-      igraph_add_edges(graph, &edge_vector, 0);
+      edge_collector_send_to_graph(edge_collector, graph);
+      edge_collector_finalize(edge_collector);
 
-      igraph_vector_destroy(&edge_vector);
       g_list_free(deletions);
       delete_idx++;
     }
@@ -146,9 +242,8 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
       /* sort the deletion list */
       deletions = g_list_sort(deletions, (GCompareFunc)alphabetize);
 
-      igraph_vector_t edge_vector;
-      igraph_vector_init(&edge_vector, 2 * g_list_length(deletions));
-      int vector_idx = 0;
+      edge_collector_t *edge_collector =
+	edge_collector_new(g_list_length(deletions));
 
       /* report matches */
       GList *cur = deletions;
@@ -164,20 +259,15 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
 	      if (strcmp(cur_word->chars, head_word->chars) != 0)
 		break;
 
-	      VECTOR(edge_vector)[vector_idx] = cur_word->id;
-	      ++vector_idx;
-	      VECTOR(edge_vector)[vector_idx] = head_word->id;
-	      ++vector_idx;
-
+	      edge_collector_push(edge_collector, cur_word->id, head_word->id);
 	      head = head->next;
 	    }
 	  cur = head;
 	}
 
-      igraph_vector_resize(&edge_vector, (long int)vector_idx);
-      igraph_add_edges(graph, &edge_vector, 0);
+      edge_collector_send_to_graph(edge_collector, graph);
+      edge_collector_finalize(edge_collector);
 
-      igraph_vector_destroy(&edge_vector);
       g_list_free(deletions);
       delete_idx++;
     }
@@ -237,6 +327,8 @@ main(int argc, char *argv[])
   g_printf("Graph contains %d edges from substitution\n", (int)(igraph_ecount(&graph)));
   apply_deletion_rule(dict, &graph);
   g_printf("Graph contains %d edges, subst. + deletion\n", (int)(igraph_ecount(&graph)));
+  apply_anagram_rule(dict, &graph);
+  g_printf("%d edges after anagrams\n", (int)(igraph_ecount(&graph)));
 
   /* look up target words in the dictionary */
   word_t *word_A = dictionary_lookup_chars_check(dict, chars_A);
