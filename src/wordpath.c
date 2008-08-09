@@ -10,15 +10,25 @@ extern gchar* en_words[];
 extern gchar* alice_words[];
 
 /*
- * edge_collector
+ * edge_collector-- convenience structure for
+ * accumulating many edges and then adding in batch
+ * to a graph object
  */
+typedef struct _edge_collector edge_collector_t;
+
+static edge_collector_t* edge_collector_new(int n_edges);
+static void edge_collector_push(edge_collector_t *edge_collector,
+				igraph_integer_t A,
+				igraph_integer_t B);
+static void edge_collector_send_to_graph(edge_collector_t *edge_collector,
+					 igraph_t *graph);
+static void edge_collector_finalize(edge_collector_t *self);
 
 struct _edge_collector
 {
   igraph_vector_t edge_vector;
   int n_edges;
 };
-typedef struct _edge_collector edge_collector_t;
 
 static edge_collector_t*
 edge_collector_new(int n_edges)
@@ -111,10 +121,10 @@ letter_sort_cb(word_t *word, gpointer data)
   /* in-place bubble-sort the word */
   int n_chars = strlen(word->chars);
   int i;
-  for (i = 0; i < n_chars; ++i)
+  for (i = n_chars; i > 0; --i)
     {
       int j;
-      for (j = i; j < n_chars - 1; ++j)
+      for (j = 0; j < i - 1; ++j)
 	if (word->chars[j + 1] < word->chars[j])
 	  {
 	    gchar tmp = word->chars[j];
@@ -122,6 +132,9 @@ letter_sort_cb(word_t *word, gpointer data)
 	    word->chars[j + 1] = tmp;
 	  }
     }
+  /* validate */
+  for (i = 1; i < n_chars; ++i)
+    g_assert(word->chars[i - 1] <= word->chars[i]);
 }
 
 /*
@@ -151,6 +164,13 @@ apply_anagram_rule(dictionary_t *dict, igraph_t *graph)
 	  if (strcmp(head_word->chars, cur_word->chars) != 0)
 	    break;
 	  edge_collector_push(edge_collector, cur_word->id, head_word->id);
+
+	  /* DEBUG dump result */
+	  /*
+	  g_printf("anagram: %s -- %s\n",
+		   dictionary_lookup_id(dict, cur_word->id)->chars,
+		   dictionary_lookup_id(dict, head_word->id)->chars);
+	  */
 	}
     }
   edge_collector_send_to_graph(edge_collector, graph);
