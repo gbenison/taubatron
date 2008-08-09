@@ -246,6 +246,7 @@ main(int argc, char *argv[])
   g_assert(word_B != NULL);
 
   /* report number of paths */
+  /*
   igraph_integer_t result;
   int err = igraph_edge_disjoint_paths (&graph,
 					&result,
@@ -253,6 +254,7 @@ main(int argc, char *argv[])
 					(igraph_integer_t)(word_B->id));
 
   g_printf("Found %d paths from %s --> %s\n", (int)result, word_A->chars, word_B->chars);
+  */
 
   igraph_vector_t path;
   igraph_vector_init(&path, 0);
