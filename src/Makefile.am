@@ -9,5 +9,6 @@ taubatron_SOURCES=dictionary.c dictionary.h \
                   wordpath.c \
                   mie-dict.c \
 	          alice-dict.c \
-                  en-dict.c
+                  en-dict.c \
+                  dickens-dict.c
 

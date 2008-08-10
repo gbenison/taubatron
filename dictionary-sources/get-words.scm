@@ -13,12 +13,23 @@
   (list->string
    (filter char-alphabetic? (string->list str))))
 
+(define (string-all-alphabetic? str)
+  (let loop ((chars (string->list str)))
+    (if (null? chars)
+	#t
+	(and (char-alphabetic? (car chars))
+	     (loop (cdr chars))))))
+
 (define (grab-line)
   (let ((line (read-line infile)))
     (if (eof-object? line)
 	#f
-	(filter (lambda (str)(not (string=? str "")))
-		(map string-filter (string-split (string-downcase line) #\ ))))))
+	(let ((words (string-split (string-downcase line) #\ )))
+	  (filter (lambda (str)(not (string=? str "")))
+		  (filter string-all-alphabetic? words))))))
+
+
+;		(map string-filter (string-split (string-downcase line) #\ ))))))
 
 (define (string-longer? n)
   (lambda (str)

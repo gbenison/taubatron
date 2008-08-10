@@ -8,6 +8,9 @@
 extern gchar* mie_words[];
 extern gchar* en_words[];
 extern gchar* alice_words[];
+extern gchar* dickens_words[];
+
+static gchar **standard_word_list = dickens_words;
 
 /*
  * edge_collector-- convenience structure for
@@ -334,7 +337,7 @@ main(int argc, char *argv[])
 
   /* populate the dictionary with words */
   gchar **cur;
-  for (cur = en_words; *cur != NULL; ++cur)
+  for (cur = standard_word_list; *cur != NULL; ++cur)
     dictionary_append (dict, *cur);
 
   /* Initialize the graph */
