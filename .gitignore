@@ -1,0 +1,11 @@
+.bzr
+Makefile.in
+build
+configure
+depcomp
+install-sh
+missing
+COPYING
+INSTALL
+aclocal.m4
+autom4te.cache/
