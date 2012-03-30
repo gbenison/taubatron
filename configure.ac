@@ -4,11 +4,13 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([src/dictionary.c])
 
 AC_PROG_CC
+AM_INIT_AUTOMAKE
+LT_INIT
+AC_PROG_INSTALL
 
 PKG_CHECK_MODULES(GLIB,   glib-2.0)
 PKG_CHECK_MODULES(IGRAPH, igraph)
 
-AM_INIT_AUTOMAKE
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
 

@@ -34,17 +34,37 @@ exec guile -s $0 2>>guile-error.log
   (with-output-to-string
     (lambda () (sxml->xml sxml))))
 
+(define (as-li x)`(li ,x))
+
+(define (make-taubatron-reply start end)
+  `(html
+    (head
+     (title "t**tron")
+     (body ,(if (and (string? start) (string? end))
+		`(ul ,(map as-li (find-path start end)))
+		"Enter starting and ending words:")
+	   (form (@ (method "post")
+		    (action "taubatron.cgi"))
+		 (input (@ (type "text")
+			   (name "start")))
+		 (input (@ (type "text")
+			   (name "end")))
+		 (input (@ (type "submit")
+			   (value "Go"))))))))
+
+
 (define (tt-handler M upath)
   (M #:set-reply-status:success)
-  (M #:add-header #:Content-type "text/plain")
+  (M #:add-header #:Content-type "text/html")
   (M #:add-content
-     (sxml->text '(p "It works!!!")))
+     (sxml->text (make-taubatron-reply "hands" "feet")))
   (M #:send-reply)
   #t)
 
 (define server
   (make-big-dishing-loop
-   #:method-handlers `((GET . ,tt-handler))))
+   #:method-handlers `((GET . ,tt-handler)
+		       (POST . ,tt-handler))))
 
 (define server-sock (socket PF_INET SOCK_STREAM 0))
 (bind server-sock AF_INET INADDR_ANY 8081)

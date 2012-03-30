@@ -9,3 +9,9 @@ COPYING
 INSTALL
 aclocal.m4
 autom4te.cache/
+ltmain.sh
+config.sub
+config.guess
+thttpd.log
+guile-error.log
+build-unix-socket/

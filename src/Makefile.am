@@ -1,10 +1,10 @@
 
-bin_PROGRAMS=taubatron
+lib_LTLIBRARIES=libtaubatron.la
 
 AM_CPPFLAGS=@GLIB_CFLAGS@ @IGRAPH_CFLAGS@
 AM_LDFLAGS=@GLIB_LIBS@ @IGRAPH_LIBS@
 
-taubatron_SOURCES=dictionary.c dictionary.h \
+libtaubatron_la_SOURCES=dictionary.c dictionary.h \
                   rule.c rule.h \
                   wordpath.c \
                   mie-dict.c \

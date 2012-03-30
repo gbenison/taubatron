@@ -1,7 +1,8 @@
 
 #include <glib.h>
 #include <string.h>
-#include <igraph.h>
+#include <igraph/igraph.h>
+#include <libguile.h>
 #include "dictionary.h"
 #include "rule.h"
 
@@ -11,6 +12,12 @@ extern gchar* alice_words[];
 extern gchar* dickens_words[];
 
 static gchar **standard_word_list = dickens_words;
+
+/*
+ * Global variables
+ */
+dictionary_t *dict;
+igraph_t graph;
 
 /*
  * edge_collector-- convenience structure for
@@ -297,20 +304,6 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
 }
 
 /*
- * FIXME
- * instructions for dumping a graph
-
-	      word_t *word_1 = dictionary_lookup_id(dict, cur_word->id);
-	      word_t *word_2 = dictionary_lookup_id(dict, head_word->id);
-
-	      g_printf("%s %s\n", word_1->chars, word_2->chars);
- *
- */
-
-char *chars_A = NULL;
-char *chars_B = NULL;
-
-/*
  * Abort with error if
  * dictionary_lookup_chars(dict, chars) fails
  */
@@ -324,52 +317,27 @@ dictionary_lookup_chars_check(dictionary_t *dict, gchar *chars)
   return result;
 }
 
-int
-main(int argc, char *argv[])
+/*
+ * Find shortest path from word A to word B
+ */
+SCM
+taubatron_find_path(SCM start, SCM finish)
 {
-  if (argc != 3)
-    g_error("Usage:\n%s <word-1> <word-2>\n", argv[0]);
-
-  chars_A = argv[1];
-  chars_B = argv[2];
-
-  dictionary_t *dict = dictionary_new();
-
-  /* populate the dictionary with words */
-  gchar **cur;
-  for (cur = standard_word_list; *cur != NULL; ++cur)
-    dictionary_append (dict, *cur);
-
-  /* Initialize the graph */
-  igraph_t graph;
-  int n_vertices = dictionary_get_max_id(dict) + 1;
-  igraph_empty(&graph, n_vertices, FALSE);
-
-  /* apply the rules */
-  apply_substitution_rule(dict, &graph);
-  g_printf("Graph contains %d edges from substitution\n", (int)(igraph_ecount(&graph)));
-  apply_deletion_rule(dict, &graph);
-  g_printf("Graph contains %d edges, subst. + deletion\n", (int)(igraph_ecount(&graph)));
-  apply_anagram_rule(dict, &graph);
-  g_printf("%d edges after anagrams\n", (int)(igraph_ecount(&graph)));
-
+  /* This is an incredibly hacky way of making an empty list. */
+  SCM result = scm_cdr(scm_list_1(scm_from_int(55)));
+  
+  /* FIXME "The C string must be freed with 'free' eventually,
+     maybe by using scm_dynwind_free" */
+  char *chars_A = scm_to_locale_string(start);
+  char *chars_B = scm_to_locale_string(finish);
+  
   /* look up target words in the dictionary */
   word_t *word_A = dictionary_lookup_chars_check(dict, chars_A);
   word_t *word_B = dictionary_lookup_chars_check(dict, chars_B);
 
+  /* FIXME don't just crash here. */
   g_assert(word_A != NULL);
   g_assert(word_B != NULL);
-
-  /* report number of paths */
-  /*
-  igraph_integer_t result;
-  int err = igraph_edge_disjoint_paths (&graph,
-					&result,
-					(igraph_integer_t)(word_A->id),
-					(igraph_integer_t)(word_B->id));
-
-  g_printf("Found %d paths from %s --> %s\n", (int)result, word_A->chars, word_B->chars);
-  */
 
   igraph_vector_t path;
   igraph_vector_init(&path, 0);
@@ -394,9 +362,35 @@ main(int argc, char *argv[])
       word_t *word = dictionary_lookup_id(dict, vertex);
       if (word == NULL)
 	break;
-      g_printf(" %s\n", word->chars);
+      result = scm_cons(scm_from_locale_string(word->chars), result);
     }
 
-  return 0;
+  return (scm_reverse(result));
+}
+
+/*
+ * Entry point for guile module
+ */
+void
+taubatron_init()
+{
+
+  dict = dictionary_new();
+
+  /* populate the dictionary with words */
+  gchar **cur;
+  for (cur = standard_word_list; *cur != NULL; ++cur)
+    dictionary_append (dict, *cur);
+
+  /* Initialize the graph */
+  int n_vertices = dictionary_get_max_id(dict) + 1;
+  igraph_empty(&graph, n_vertices, FALSE);
+
+  /* apply the rules */
+  apply_substitution_rule(dict, &graph);
+  apply_deletion_rule(dict, &graph);
+  apply_anagram_rule(dict, &graph);
+
+  scm_c_define_gsubr("find-path", 2, 1, 0, taubatron_find_path);
 
 }
