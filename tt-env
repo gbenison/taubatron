@@ -1,0 +1,6 @@
+#!/bin/sh
+
+export GUILE_LOAD_PATH=`pwd`:$GUILE_LOAD_PATH
+export LTDL_LIBRARY_PATH=`pwd`:$LTDL_LIBRARY_PATH
+
+exec $@

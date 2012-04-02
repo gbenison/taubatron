@@ -28,7 +28,7 @@ exec guile -s $0 2>>guile-error.log
 
 (use-modules (taubatron)
 	     (sxml simple)
-	     (www server-utils big-dishing-loop))
+	     (web server))
 
 (define (sxml->text sxml)
   (with-output-to-string
@@ -53,19 +53,14 @@ exec guile -s $0 2>>guile-error.log
 			   (value "Go"))))))))
 
 
-(define (tt-handler M upath)
-  (M #:set-reply-status:success)
-  (M #:add-header #:Content-type "text/html")
-  (M #:add-content
-     (sxml->text (make-taubatron-reply "hands" "feet")))
-  (M #:send-reply)
-  #t)
+(define (tt-handler request request-body)
+  (values '((content-type . (text/html)))
+	  (sxml->text (make-taubatron-reply "hands" "feet"))))
 
-(define server
-  (make-big-dishing-loop
-   #:method-handlers `((GET . ,tt-handler)
-		       (POST . ,tt-handler))))
+(define (make-unix-socket fname)
+  (let ((server-socket (socket PF_UNIX SOCK_STREAM 0)))
+    (bind server-socket AF_UNIX fname)
+    server-socket))
 
-(define server-sock (socket PF_INET SOCK_STREAM 0))
-(bind server-sock AF_INET INADDR_ANY 8081)
-(server server-sock)
+(run-server tt-handler)
+;; (run-server tt-handler 'http '(#:socket ,(make-unix-socket "foo.sock")))
