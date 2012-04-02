@@ -10,6 +10,7 @@ AC_PROG_INSTALL
 
 PKG_CHECK_MODULES(GLIB,   glib-2.0)
 PKG_CHECK_MODULES(IGRAPH, igraph)
+PKG_CHECK_MODULES(GUILE,  guile-2.0)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
