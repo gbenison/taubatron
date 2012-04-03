@@ -28,6 +28,8 @@ exec guile -s $0 2>>guile-error.log
 
 (use-modules (taubatron)
 	     (sxml simple)
+	     (rnrs bytevectors)
+	     (web request)
 	     (web server))
 
 (define (sxml->text sxml)
@@ -44,7 +46,7 @@ exec guile -s $0 2>>guile-error.log
 		`(ul ,(map as-li (find-path start end)))
 		"Enter starting and ending words:")
 	   (form (@ (method "post")
-		    (action "taubatron.cgi"))
+		    (action "taubatron"))
 		 (input (@ (type "text")
 			   (name "start")))
 		 (input (@ (type "text")
@@ -52,10 +54,33 @@ exec guile -s $0 2>>guile-error.log
 		 (input (@ (type "submit")
 			   (value "Go"))))))))
 
+(define (list->assoc-pair lst)
+  (if (null? (cdr lst))
+      (cons (car lst) #f)
+      (cons (car lst)
+	    (cadr lst))))
 
+(define (parse-post-data data)
+  (map list->assoc-pair
+       (map
+	(lambda (str)
+	  (string-split str #\=))
+	(string-split (utf8->string data) #\&))))
+
+;; FIXME to parse post data:
+;; example = "name=greg&quest=grail"
+;; string-split str #\&
 (define (tt-handler request request-body)
-  (values '((content-type . (text/html)))
-	  (sxml->text (make-taubatron-reply "hands" "feet"))))
+  (display (request-method request))
+  (cond ((eq? (request-method request) 'GET)
+	 (values '((content-type . (text/html)))
+		 (sxml->text (make-taubatron-reply #f #f))))
+	((eq? (request-method request) 'POST)
+	 (values '((content-type . (text/html)))
+		 (let ((post-data (parse-post-data request-body)))
+		   (sxml->text (make-taubatron-reply
+				(assoc-ref post-data "start")
+				(assoc-ref post-data "end"))))))))
 
 (define (make-unix-socket fname)
   (let ((server-socket (socket PF_UNIX SOCK_STREAM 0)))
