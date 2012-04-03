@@ -62,5 +62,5 @@ exec guile -s $0 2>>guile-error.log
     (bind server-socket AF_UNIX fname)
     server-socket))
 
-(run-server tt-handler)
-;; (run-server tt-handler 'http '(#:socket ,(make-unix-socket "foo.sock")))
+;; (run-server tt-handler)
+(run-server tt-handler 'http `(#:socket ,(make-unix-socket "/tmp/test.sock")))
