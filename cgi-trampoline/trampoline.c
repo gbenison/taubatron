@@ -78,12 +78,14 @@ main()
   fprintf(upstream_socket, "\r\n");
   fwrite(buf, 1, actual_content_length, upstream_socket);
   fflush(upstream_socket);
-  /* FIXME shutdown socket for transmission here? */
 
   /* Read response */
   #define BUF_SIZE 512
   char response_buf[BUF_SIZE];
 
+  char *status_line = NULL;
+  int status_line_length = 0;
+  getline(&status_line, &status_line_length, upstream_socket);
   while (!feof(upstream_socket))
     {
       int n_read = fread(response_buf, 1, BUF_SIZE, upstream_socket);
