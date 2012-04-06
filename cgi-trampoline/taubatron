@@ -2,6 +2,8 @@
 
 exec guile -s $0 $@
 
+FIXME this suffers from the send-response-line-twice bug of CGI scripts
+
 !#
 
 (use-modules (srfi srfi-1)
@@ -59,7 +61,8 @@ exec guile -s $0 $@
 
 (let* ((response (send-request uri content (make-socket)))
        (body (read-response-body response)))
-  (write-response response (current-output-port))
+  (write-headers (response-headers response) (current-output-port))
+  (display "\r\n" (current-output-port))
   (if body (display (utf8->string body))))
 
 
