@@ -2,8 +2,6 @@
 
 exec guile -s $0 $@
 
-FIXME this suffers from the send-response-line-twice bug of CGI scripts
-
 !#
 
 (use-modules (srfi srfi-1)
