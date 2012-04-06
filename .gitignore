@@ -15,3 +15,5 @@ config.guess
 thttpd.log
 guile-error.log
 build-unix-socket/
+trampoline
+

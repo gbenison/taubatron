@@ -1,4 +1,5 @@
 #!/bin/sh
+# -*-Scheme-*-
 
 exec guile -s $0 $@
 
