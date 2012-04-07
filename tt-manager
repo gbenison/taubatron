@@ -1,0 +1,13 @@
+#!/bin/sh
+
+TT_SERVER="./tt-server"
+TT_SOCK_NAME="/tmp/test.sock"
+
+while true
+do
+    test -e $TT_SOCK_NAME && rm $TT_SOCK_NAME
+    $TT_SERVER $TT_SOCK_NAME
+done
+
+
+
