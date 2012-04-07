@@ -22,7 +22,7 @@ export GUILE_LOAD_PATH=$GUILE_LOAD_PATH:`pwd`;
 export LTDL_LIBRARY_PATH=$LTDL_LIBRARY_PATH:`pwd`;
 export GUILE_WARN_DEPRECATED=no;
 # exec guile -s $0 2>/dev/null
-exec guile -s $0 2>>guile-error.log
+exec guile -s $0 $@ 2>>guile-error.log
 
 !#
 
@@ -31,6 +31,10 @@ exec guile -s $0 2>>guile-error.log
 	     (rnrs bytevectors)
 	     (web request)
 	     (web server))
+
+(define socket-file-name
+  (or (false-if-exception (cadr (command-line)))
+      "/tmp/test.sock"))
 
 (define (sxml->text sxml)
   (with-output-to-string
@@ -88,4 +92,4 @@ exec guile -s $0 2>>guile-error.log
     server-socket))
 
 ;; (run-server tt-handler)
-(run-server tt-handler 'http `(#:socket ,(make-unix-socket "/tmp/test.sock")))
+(run-server tt-handler 'http `(#:socket ,(make-unix-socket socket-file-name)))
