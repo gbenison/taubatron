@@ -65,7 +65,7 @@ main()
   fprintf(upstream_socket, "%s %s %s\r\n",
 	  getenv("REQUEST_METHOD"),
 	  request_path,
-	  getenv("SERVER_PROTOCOL"));
+	  "HTTP/1.0");
   if (content_length > 0)
     fprintf(upstream_socket, "Content-length: %d\r\n", actual_content_length);
   if (getenv("CONTENT_TYPE"))
@@ -91,6 +91,7 @@ main()
 	  for (; offset < n_read; ++offset)
 	    if (response_buf[offset] == '\n')
 	      {
+		++offset;
 		f_status_line = 1;
 		break;
 	      }
