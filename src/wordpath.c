@@ -6,6 +6,18 @@
 #include "dictionary.h"
 #include "rule.h"
 
+#define TAUBATRON_ERROR taubatron_error_quark()
+static GQuark
+taubatron_error_quark (void)
+{
+  return g_quark_from_static_string("taubatron-error-quark");
+}
+
+enum taubatron_errors {
+  TAUBATRON_0,
+  TAUBATRON_NOT_FOUND
+};
+
 extern gchar* mie_words[];
 extern gchar* en_words[];
 extern gchar* alice_words[];
@@ -308,13 +320,20 @@ apply_substitution_rule(dictionary_t *dict, igraph_t *graph)
  * dictionary_lookup_chars(dict, chars) fails
  */
 static word_t*
-dictionary_lookup_chars_check(dictionary_t *dict, gchar *chars)
+dictionary_lookup_chars_check(dictionary_t *dict, gchar *chars, GError **error)
 {
   word_t *result = dictionary_lookup_chars(dict, chars);
   if (result == NULL)
-    g_error("The word '%s' is not in the dictionary, sorry\n", chars);
-
-  return result;
+    {
+      g_set_error(error,
+		  TAUBATRON_ERROR,
+		  TAUBATRON_NOT_FOUND,
+		  "Word '%s' is not in the dictionary",
+		  chars);
+      return NULL;
+    }
+  else
+    return result;
 }
 
 /*
@@ -323,8 +342,13 @@ dictionary_lookup_chars_check(dictionary_t *dict, gchar *chars)
 SCM
 taubatron_find_path(SCM start, SCM finish)
 {
+  static SCM tt_error_key = NULL;
+  if (!tt_error_key)
+    tt_error_key = scm_from_locale_symbol("taubatron-error");
+  
   /* This is an incredibly hacky way of making an empty list. */
-  SCM result = scm_cdr(scm_list_1(scm_from_int(55)));
+  /*  SCM result = scm_cdr(scm_list_1(scm_from_int(55))); */
+  SCM result = SCM_EOL;
   
   /* FIXME "The C string must be freed with 'free' eventually,
      maybe by using scm_dynwind_free" */
@@ -332,10 +356,22 @@ taubatron_find_path(SCM start, SCM finish)
   char *chars_B = scm_to_locale_string(finish);
   
   /* look up target words in the dictionary */
-  word_t *word_A = dictionary_lookup_chars_check(dict, chars_A);
-  word_t *word_B = dictionary_lookup_chars_check(dict, chars_B);
+  GError *lookup_error = NULL;
+  word_t *word_A = dictionary_lookup_chars_check(dict, chars_A, &lookup_error);
+  if (word_A == NULL)
+    {
+      scm_error(tt_error_key, "find_path", lookup_error->message,
+		SCM_EOL, SCM_EOL);
+      return NULL;
+    }
+  word_t *word_B = dictionary_lookup_chars_check(dict, chars_B, &lookup_error);
+  if (word_B == NULL)
+    {
+      scm_error(tt_error_key, "find_path", lookup_error->message,
+		SCM_EOL, SCM_EOL);
+      return NULL;
+    }
 
-  /* FIXME don't just crash here. */
   g_assert(word_A != NULL);
   g_assert(word_B != NULL);
 
