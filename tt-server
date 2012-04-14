@@ -71,11 +71,7 @@ exec guile -s $0 $@ 2>>guile-error.log
 	  (string-split str #\=))
 	(string-split (utf8->string data) #\&))))
 
-;; FIXME to parse post data:
-;; example = "name=greg&quest=grail"
-;; string-split str #\&
 (define (tt-handler request request-body)
-  (display (request-method request))
   (cond ((eq? (request-method request) 'GET)
 	 (values '((content-type . (text/html)))
 		 (sxml->text (make-taubatron-reply #f #f))))
