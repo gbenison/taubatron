@@ -60,8 +60,6 @@ main()
 
   FILE *upstream_socket = open_socket_file(socket_name);
   setvbuf(upstream_socket, NULL, _IONBF, 0);
-  /* FIXME for debugging, send to stdout */
-  /* FILE *upstream_socket = stdout; */
 
   /* Construct request and send to upstream. */
   fprintf(upstream_socket, "%s %s %s\r\n",
@@ -83,13 +81,21 @@ main()
   #define BUF_SIZE 512
   char response_buf[BUF_SIZE];
 
-  char *status_line = NULL;
-  int status_line_length = 0;
-  getline(&status_line, &status_line_length, upstream_socket);
+  int f_status_line = 0;
   while (!feof(upstream_socket))
     {
       int n_read = fread(response_buf, 1, BUF_SIZE, upstream_socket);
-      fwrite(response_buf, 1, n_read, stdout);
+      int offset = 0;
+      if (!f_status_line)
+	{
+	  for (; offset < n_read; ++offset)
+	    if (response_buf[offset] == '\n')
+	      {
+		f_status_line = 1;
+		break;
+	      }
+	}
+      fwrite(&response_buf[offset], 1, n_read - offset, stdout);
     }
 
   return 0;
