@@ -346,10 +346,6 @@ taubatron_find_path(SCM start, SCM finish)
   if (!tt_error_key)
     tt_error_key = scm_from_locale_symbol("taubatron-error");
   
-  /* This is an incredibly hacky way of making an empty list. */
-  /*  SCM result = scm_cdr(scm_list_1(scm_from_int(55))); */
-  SCM result = SCM_EOL;
-  
   /* FIXME "The C string must be freed with 'free' eventually,
      maybe by using scm_dynwind_free" */
   char *chars_A = scm_to_locale_string(start);
@@ -362,14 +358,14 @@ taubatron_find_path(SCM start, SCM finish)
     {
       scm_error(tt_error_key, "find_path", lookup_error->message,
 		SCM_EOL, SCM_EOL);
-      return NULL;
+      return SCM_EOL;
     }
   word_t *word_B = dictionary_lookup_chars_check(dict, chars_B, &lookup_error);
   if (word_B == NULL)
     {
       scm_error(tt_error_key, "find_path", lookup_error->message,
 		SCM_EOL, SCM_EOL);
-      return NULL;
+      return SCM_EOL;
     }
 
   g_assert(word_A != NULL);
@@ -391,17 +387,27 @@ taubatron_find_path(SCM start, SCM finish)
 			    to,
 			    IGRAPH_ALL);
 
-  int i;
-  for (i = 0; ; ++i)
+  /* FIXME igraph_vector_size() */
+  if (igraph_vector_size(&path) > 0)
     {
-      igraph_integer_t vertex = igraph_vector_e(&path, i);
-      word_t *word = dictionary_lookup_id(dict, vertex);
-      if (word == NULL)
-	break;
-      result = scm_cons(scm_from_locale_string(word->chars), result);
+      SCM result = SCM_EOL;
+      
+      int i;
+      for (i = 0; i < igraph_vector_size(&path); ++i)
+	{
+	  igraph_integer_t vertex = igraph_vector_e(&path, i);
+	  word_t *word = dictionary_lookup_id(dict, vertex);
+	  g_assert (word != NULL);
+	  result = scm_cons(scm_from_locale_string(word->chars), result);
+	}
+      return (scm_reverse(result));
     }
-
-  return (scm_reverse(result));
+  else
+    {
+      scm_error(tt_error_key, "find_path", "no path found",
+		SCM_EOL, SCM_EOL);
+      return SCM_EOL;
+    }
 }
 
 /*
