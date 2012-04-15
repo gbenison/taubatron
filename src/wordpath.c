@@ -387,7 +387,6 @@ taubatron_find_path(SCM start, SCM finish)
 			    to,
 			    IGRAPH_ALL);
 
-  /* FIXME igraph_vector_size() */
   if (igraph_vector_size(&path) > 0)
     {
       SCM result = SCM_EOL;
@@ -411,6 +410,35 @@ taubatron_find_path(SCM start, SCM finish)
 }
 
 /*
+ * Fill dictionary 'dict' with words from file 'src' of minimum length
+ * 'min_length'.
+ */
+static void
+dict_fill_from_file(FILE *src, dictionary_t *dict, gint min_length)
+{
+  static const char * delim = " \t\n\r";
+  int buffer_size = 256;
+  char * line_buffer = (char*)malloc(buffer_size * sizeof(char));
+  while (!feof(src))
+    {
+      int n_read = getline(&line_buffer, &buffer_size, src);
+      char * word;
+      for (word = strtok(line_buffer, delim); word != NULL; word = strtok(NULL, delim))
+	if (strlen(word) >= min_length)
+	  dictionary_append(dict, word);
+    }
+}
+
+static void
+dict_fill_from_fname(const char * fname, dictionary_t *dict, gint min_length)
+{
+  FILE * infile = fopen(fname, "r");
+  /* FIXME propagate error */
+  dict_fill_from_file(infile, dict, min_length);
+  fclose (infile);
+}
+
+/*
  * Entry point for guile module
  */
 void
@@ -420,9 +448,12 @@ taubatron_init()
   dict = dictionary_new();
 
   /* populate the dictionary with words */
+  /*
   gchar **cur;
   for (cur = standard_word_list; *cur != NULL; ++cur)
     dictionary_append (dict, *cur);
+  */
+  dict_fill_from_fname("/usr/share/dict/words", dict, 3);
 
   /* Initialize the graph */
   int n_vertices = dictionary_get_max_id(dict) + 1;
