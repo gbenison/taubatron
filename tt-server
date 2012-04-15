@@ -46,9 +46,15 @@ exec guile -s $0 $@ 2>>guile-error.log
   `(html
     (head
      (title "t**tron")
-     (body ,(if (and (string? start) (string? end))
-		`(ul ,(map as-li (find-path start end)))
-		"Enter starting and ending words:")
+     (body ,(catch 'taubatron-error
+	      (lambda ()
+		(if (and (string? start) (string? end))
+		    `(ul ,(map as-li (find-path start end)))
+		    "Enter starting and ending words:"))
+	      (lambda (key proc msg . args)
+		`(div (@ (class "error"))
+		      "Error:"
+		      (p ,msg))))
 	   (form (@ (method "post")
 		    (action "taubatron"))
 		 (input (@ (type "text")
