@@ -1,0 +1,7 @@
+#!/bin/sh
+
+BASE_DIR=`dirname $0`;
+THTTPD=/usr/sbin/thttpd;
+PORT=8081
+
+$THTTPD -dd $BASE_DIR -p $PORT -l ${BASE_DIR}/thttpd.log -c '**'
