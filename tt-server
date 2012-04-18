@@ -42,27 +42,61 @@ exec guile -s $0 $@ 2>>guile-error.log
 
 (define (as-li x)`(li ,x))
 
+;; Render subsets of 'path' of the form (p1,p2,p3,...p_n) such that
+;; the length of the rendered string is <= max-length.
+(define (abbreviate-path path max-length)
+  (let ((full-string (string-join path " - ")))
+    (if (< (string-length full-string) max-length)
+	full-string
+	(let loop ((prev "")
+		   (n 1))
+	  (let ((candidate (string-append
+			    (string-join (take path n) " - ")
+			    "..."
+			    (last path))))
+	    (if (> (string-length candidate) max-length)
+		prev
+		(loop candidate (+ n 1))))))))
+
+(define (make-tweet-button path)
+  `(div
+    (a (@ (href "https://twitter.com/share")
+	  (data-text ,(abbreviate-path path 90))
+	  (data-related "gcbenison")
+	  (data-hashtags "taubatron")
+	  (data-count "none")
+	  (class "twitter-share-button"))
+       "Tweet")))
+
 (define (make-taubatron-reply start end)
   `(html
     (head
      (title "t**tron")
-     (body ,(catch 'taubatron-error
-	      (lambda ()
-		(if (and (string? start) (string? end))
-		    `(ul ,(map as-li (find-path start end)))
-		    "Enter starting and ending words:"))
-	      (lambda (key proc msg . args)
-		`(div (@ (class "error"))
-		      "Error:"
-		      (p ,msg))))
-	   (form (@ (method "post")
-		    (action "taubatron"))
-		 (input (@ (type "text")
-			   (name "start")))
-		 (input (@ (type "text")
-			   (name "end")))
-		 (input (@ (type "submit")
-			   (value "Go"))))))))
+     (script (@ (language "javascript")
+		(src "http://localhost:8081/tweet.js"))
+	     " "))
+    (body
+     (@ (onload "tweetinit()"))
+     ,(catch 'taubatron-error
+	(lambda ()
+	  (if (and (string? start) (string? end))
+	      (let ((path (find-path start end)))
+		`(div (@ (id "result"))
+		      (ul ,(map as-li path))
+		      ,(make-tweet-button path)))
+	      "Enter starting and ending words:"))
+	(lambda (key proc msg . args)
+	  `(div (@ (class "error"))
+		"Error:"
+		(p ,msg))))
+	  (form (@ (method "post")
+		   (action "taubatron"))
+		(input (@ (type "text")
+			  (name "start")))
+		(input (@ (type "text")
+			  (name "end")))
+		(input (@ (type "submit")
+			  (value "Go")))))))
 
 (define (list->assoc-pair lst)
   (if (null? (cdr lst))
