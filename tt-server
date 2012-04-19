@@ -74,6 +74,7 @@ exec guile -s $0 $@ 2>>guile-error.log
     `(html
       (head
        (title "The Taubatron")
+       (link (@ (rel "canonical") (href "http://gcbenison.wordpress.com")))
        (link (@ (rel "stylesheet") (type "text/css") (href "taubatron.css")))
        (script (@ (language "javascript")
 		  (src "http://localhost:8081/tweet.js"))
