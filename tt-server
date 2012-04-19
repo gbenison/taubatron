@@ -29,6 +29,7 @@ exec guile -s $0 $@ 2>>guile-error.log
 (use-modules (taubatron)
 	     (sxml simple)
 	     (rnrs bytevectors)
+	     (srfi srfi-1)
 	     (web request)
 	     (web server))
 
@@ -66,38 +67,43 @@ exec guile -s $0 $@ 2>>guile-error.log
 	  (data-hashtags "taubatron")
 	  (data-count "none")
 	  (class "twitter-share-button"))
-       "Tweet")))
+       "Tweet this result")))
 
 (define (make-taubatron-reply start end)
-  `(html
-    (head
-     (title "t**tron")
-     (script (@ (language "javascript")
-		(src "http://localhost:8081/tweet.js"))
-	     " "))
-    (body
-     (@ (onload "tweetinit()"))
-     ,(catch 'taubatron-error
-	(lambda ()
-	  (if (and (string? start) (string? end))
-	      (let ((path (find-path start end)))
-		`(div (@ (id "result"))
-		      (ul ,(map as-li path))
-		      ,(make-tweet-button path)
-		      "Do another:"))
-	      "Enter starting and ending words:"))
-	(lambda (key proc msg . args)
-	  `(div (@ (class "error"))
-		"Error:"
-		(p ,msg))))
-	  (form (@ (method "post")
-		   (action "taubatron"))
-		(input (@ (type "text")
-			  (name "start")))
-		(input (@ (type "text")
-			  (name "end")))
-		(input (@ (type "submit")
-			  (value "Go")))))))
+  (let ((input? (and (string? start) (string? end))))
+    `(html
+      (head
+       (title "The Taubatron")
+       (link (@ (rel "stylesheet") (type "text/css") (href "taubatron.css")))
+       (script (@ (language "javascript")
+		  (src "http://localhost:8081/tweet.js"))
+	       " "))
+      (body
+       (@ (onload "tweetinit()"))
+       (div (@ (id "nav"))
+	    (ul (li (a (@ (href "http://gcbenison.wordpress.com/2012/03/28/the-nerdy-stuff-matters/")) "About"))))
+       ,(if input?
+	   (catch
+	     'taubatron-error
+	     (lambda ()
+	       (let ((path (find-path start end)))
+		 `(div (@ (id "result"))
+		       (ul ,(map as-li path))
+		       ,(make-tweet-button path))))
+	     (lambda (key proc msg . args)
+	       `(div (@ (class "error"))
+		     "Error:"
+		     (p ,msg))))
+	   "")
+       (form (@ (method "post")
+		 (action "taubatron"))
+	     (p ,(if input? "Try another:" "Enter starting and ending words:"))
+	     (input (@ (type "text")
+		       (name "start")))
+	     (input (@ (type "text")
+		       (name "end")))
+	     (input (@ (type "submit")
+		       (value "Go"))))))))
 
 (define (list->assoc-pair lst)
   (if (null? (cdr lst))
@@ -128,5 +134,8 @@ exec guile -s $0 $@ 2>>guile-error.log
     (bind server-socket AF_UNIX fname)
     server-socket))
 
-;; (run-server tt-handler)
 (run-server tt-handler 'http `(#:socket ,(make-unix-socket socket-file-name)))
+
+
+
+
