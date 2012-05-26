@@ -70,41 +70,57 @@ exec guile -s $0 $@ 2>>guile-error.log
        "Tweet this result")))
 
 (define (make-taubatron-reply start end)
+  `(html
+    (head
+     (title "The Taubatron")
+     (link (@ (rel "canonical") (href "http://gcbenison.wordpress.com")))
+     (link (@ (rel "stylesheet") (type "text/css") (href "taubatron.css")))
+     (script (@ (language "javascript")
+		(src "http://localhost:8081/tweet.js"))
+	     " "))
+    (body
+     (@ (onload "tweetinit()"))
+     (div (@ (id "header"))
+	  (h1 "The "
+	      (a (@ (href "taubatron")) "Taubatron")))
+     (div (@ (id "content"))
+	  (div (@ (id "left-column"))
+	       ,(taubatron-meta-column))
+	  (div (@ (id "right-column"))
+	       ,(make-taubatron-form start end))))))
+
+(define taubatron-meta-column
+  (let* ((handle (open-input-file "about.html"))
+	 (contents (xml->sxml handle)))
+    (close handle)
+    (lambda ()
+      contents)))
+
+(define (make-taubatron-form start end)
   (let ((input? (and (string? start) (string? end))))
-    `(html
-      (head
-       (title "The Taubatron")
-       (link (@ (rel "canonical") (href "http://gcbenison.wordpress.com")))
-       (link (@ (rel "stylesheet") (type "text/css") (href "taubatron.css")))
-       (script (@ (language "javascript")
-		  (src "http://localhost:8081/tweet.js"))
-	       " "))
-      (body
-       (@ (onload "tweetinit()"))
-       (div (@ (id "nav"))
-	    (ul (li (a (@ (href "http://gcbenison.wordpress.com/2012/03/28/the-nerdy-stuff-matters/")) "About"))))
-       ,(if input?
-	   (catch
-	     'taubatron-error
-	     (lambda ()
-	       (let ((path (find-path start end)))
-		 `(div (@ (id "result"))
-		       (ul ,(map as-li path))
-		       ,(make-tweet-button path))))
-	     (lambda (key proc msg . args)
-	       `(div (@ (class "error"))
-		     "Error:"
-		     (p ,msg))))
-	   "")
-       (form (@ (method "post")
-		 (action "taubatron"))
-	     (p ,(if input? "Try another:" "Enter starting and ending words:"))
+    `(,(if input?
+	  (catch
+	    'taubatron-error
+	    (lambda ()
+	      (let ((path (find-path start end)))
+		`(div (@ (id "result"))
+		      (ul ,(map as-li path))
+		      ,(make-tweet-button path))))
+	    (lambda (key proc msg . args)
+	      `(div (@ (class "error"))
+		    "Error:"
+		    (p ,msg))))
+	  "")
+      (form (@ (method "post")
+	       (action "taubatron"))
+	    "Transform"
 	     (input (@ (type "text")
 		       (name "start")))
+	     "into"
 	     (input (@ (type "text")
 		       (name "end")))
 	     (input (@ (type "submit")
-		       (value "Go"))))))))
+		       (value "Go")))))))
 
 (define (list->assoc-pair lst)
   (if (null? (cdr lst))
@@ -119,16 +135,18 @@ exec guile -s $0 $@ 2>>guile-error.log
 	  (string-split str #\=))
 	(string-split (utf8->string data) #\&))))
 
+(define (as-html-reply sxml)
+  (values '((content-type . (text/html)))
+	  (sxml->text sxml)))
+
 (define (tt-handler request request-body)
   (cond ((eq? (request-method request) 'GET)
-	 (values '((content-type . (text/html)))
-		 (sxml->text (make-taubatron-reply #f #f))))
+	 (as-html-reply (make-taubatron-reply #f #f)))
 	((eq? (request-method request) 'POST)
-	 (values '((content-type . (text/html)))
-		 (let ((post-data (parse-post-data request-body)))
-		   (sxml->text (make-taubatron-reply
-				(assoc-ref post-data "start")
-				(assoc-ref post-data "end"))))))))
+	 (let ((post-data (parse-post-data request-body)))
+	   (as-html-reply (make-taubatron-reply
+			   (assoc-ref post-data "start")
+			   (assoc-ref post-data "end")))))))
 
 (define (make-unix-socket fname)
   (let ((server-socket (socket PF_UNIX SOCK_STREAM 0)))

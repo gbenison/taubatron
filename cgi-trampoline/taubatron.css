@@ -3,6 +3,29 @@ body {
     margin-right:   5%;
 }
 
+div#header {
+    border-bottom:   2px solid black;
+}
+
+div#content {
+    float:     left;
+    position:  relative;
+    width:     100%;
+}
+
+div#left-column {
+    float:     left;
+    position:  relative;
+    width:     30%;
+    padding:   1em;
+}
+
+div#right-column {
+    float:     left;
+    position:  relative;
+    width:     65%;
+}
+
 #nav ul a {
     text-decoration: none;
     text-transform:  uppercase;
@@ -15,7 +38,6 @@ body {
     margin-left:     0px;
     padding-left:    0px;
     padding-bottom:  0.3em;
-    border-bottom:   2px solid black;
 }
 
 
