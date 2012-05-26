@@ -96,16 +96,19 @@ exec guile -s $0 $@ 2>>guile-error.log
     (lambda ()
       contents)))
 
+;; Render a path of words [String] into SXML
+(define (path->sxml path)
+  `(div (@ (id "result"))
+	(ul ,(map as-li path))
+	,(make-tweet-button path)))
+
 (define (make-taubatron-form start end)
   (let ((input? (and (string? start) (string? end))))
     `(,(if input?
 	  (catch
 	    'taubatron-error
 	    (lambda ()
-	      (let ((path (find-path start end)))
-		`(div (@ (id "result"))
-		      (ul ,(map as-li path))
-		      ,(make-tweet-button path))))
+	      (path->sxml (find-path start end)))
 	    (lambda (key proc msg . args)
 	      `(div (@ (class "error"))
 		    "Error:"
