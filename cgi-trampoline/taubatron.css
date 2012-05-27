@@ -46,9 +46,32 @@ div#right-column {
     padding-left:    0px;
 }
 
-#result {
+div#result {
     margin-bottom:   2em;
 }
+
+div#result ul {
+    padding:          0.5em;
+    text-transform:   uppercase;
+    text-align:       center;
+    font-family:      courier,monospace;
+    font-weight:      bold;
+    font-size:        150%;
+    width:            10em;
+    background:       #dddddd;
+    list-style-type:  none;
+}
+
+div#result ul > li {
+    padding:          0.2em;
+    margin-left:      0pt;
+}
+
+div#result ul > li > span._2 { color: red; }
+div#result ul > li > span._3 { color: blue; }
+div#result ul > li > span._4 { color: magenta; }
+div#result ul > li > span._5 { color: orange; }
+div#result ul > li > span._6 { color: purple; }
 
 div.error {
     padding:         0.5em;

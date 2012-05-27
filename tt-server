@@ -22,6 +22,7 @@ export GUILE_LOAD_PATH=$GUILE_LOAD_PATH:`pwd`;
 export LTDL_LIBRARY_PATH=$LTDL_LIBRARY_PATH:`pwd`;
 export GUILE_WARN_DEPRECATED=no;
 # exec guile -s $0 2>/dev/null
+# exec guile --listen -s $0 $@ 2>>guile-error.log
 exec guile -s $0 $@ 2>>guile-error.log
 
 !#
@@ -42,6 +43,64 @@ exec guile -s $0 $@ 2>>guile-error.log
     (lambda () (sxml->xml sxml))))
 
 (define (as-li x)`(li ,x))
+
+(define (->string x)
+  (format #f "~a" x))
+
+;; Convert a list of words into a list of alists
+; ((c1a . n1b ...)(c1b . n1b))
+; such that if c1a /= c1b, then n1a /= n1b.
+; 
+; Useful for coloring the letters in "Tauba style"
+(define (annotate-word-sequence words)
+  (let loop ((init (word->init (car words)))
+	     (rest (cdr words)))
+    (if (null? rest)
+	(list init)
+	(cons init
+	      (loop (ensure-tags
+		     (match-attributes (car rest) init))
+		    (cdr rest))))))
+
+(define (word->init word)
+  (map (lambda (c) (cons c 1)) (string->list word)))
+
+(define (match-attribute char template)
+  (cond ((null? template) (cons (cons char #f) template))
+	((equal? char (caar template))
+	 template)
+	(else
+	 (let ((next (match-attribute char (cdr template))))
+	   (cons (car next)
+		 (cons (car template) (cdr next)))))))
+
+(define (match-attributes word template)
+  (car
+   (fold-right
+    (lambda (c acc)
+      (let* ((template (cdr acc))
+	     (result (car acc))
+	     (next (match-attribute c template))
+	     (next-result (car next))
+	     (next-template (cdr next)))
+	(cons (cons next-result result)
+	      next-template)))
+    (cons '() template)
+    (string->list word))))
+
+(define (highest-tag template)
+  (apply max (filter number? (map cdr template))))
+
+(define (ensure-tags template)
+  (let loop ((highest (highest-tag template))
+	     (template template))
+    (cond ((null? template) '())
+	  ((number? (cdar template))
+	   (cons (car template)
+		 (loop highest (cdr template))))
+	  (else (cons (cons (caar template)
+			    (+ 1 highest))
+		      (loop (+ 1 highest) (cdr template)))))))
 
 ;; Render subsets of 'path' of the form (p1,p2,p3,...p_n) such that
 ;; the length of the rendered string is <= max-length.
@@ -99,7 +158,15 @@ exec guile -s $0 $@ 2>>guile-error.log
 ;; Render a path of words [String] into SXML
 (define (path->sxml path)
   `(div (@ (id "result"))
-	(ul ,(map as-li path))
+	(ul
+	 ,(map 
+	   (lambda (word)
+	     `(li ,(map
+		    (lambda (char)
+		      `(span (@ (class ,(format #f "_~a" (cdr char))))
+			     ,(->string (car char))))
+		    word)))
+	   (annotate-word-sequence path)))
 	,(make-tweet-button path)))
 
 (define (make-taubatron-form start end)
