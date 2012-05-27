@@ -7,6 +7,20 @@ div#header {
     border-bottom:   2px solid black;
 }
 
+#header h1 a {
+    font-family:     "Andale Mono",monospace;
+    text-transform:  uppercase;
+    letter-spacing:  10px;
+    text-decoration: none;
+    color:           black;
+    font-size:       120%;
+}
+
+#credits {
+    list-style:     none;
+    padding:        0.2em;
+}
+
 div#content {
     float:     left;
     position:  relative;
@@ -58,7 +72,7 @@ div#result ul {
     font-weight:      bold;
     font-size:        150%;
     width:            10em;
-    background:       #dddddd;
+    border:           2px #dddddd solid;
     list-style-type:  none;
 }
 
