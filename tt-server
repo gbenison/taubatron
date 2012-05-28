@@ -47,6 +47,12 @@ exec guile -s $0 $@ 2>>guile-error.log
 (define (->string x)
   (format #f "~a" x))
 
+(define (scanl op init xs)
+  (if (null? xs)
+      (list init)
+      (cons init
+	    (scanl op (op init (car xs)) (cdr xs)))))
+
 ;; Convert a list of words into a list of alists
 ; ((c1a . n1b ...)(c1b . n1b))
 ; such that if c1a /= c1b, then n1a /= n1b.
@@ -74,19 +80,11 @@ exec guile -s $0 $@ 2>>guile-error.log
 	   (cons (car next)
 		 (cons (car template) (cdr next)))))))
 
+(define (match-attribute-cdr template char)
+  (match-attribute char (cdr template)))
+
 (define (match-attributes word template)
-  (car
-   (fold-right
-    (lambda (c acc)
-      (let* ((template (cdr acc))
-	     (result (car acc))
-	     (next (match-attribute c template))
-	     (next-result (car next))
-	     (next-template (cdr next)))
-	(cons (cons next-result result)
-	      next-template)))
-    (cons '() template)
-    (string->list word))))
+  (map car (cdr (scanl match-attribute-cdr (cons #f template) (string->list word)))))
 
 (define (highest-tag template)
   (apply max (filter number? (map cdr template))))
