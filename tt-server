@@ -144,7 +144,9 @@ exec guile -s $0 $@ 2>>guile-error.log
 	  (div (@ (id "left-column"))
 	       ,(taubatron-meta-column))
 	  (div (@ (id "right-column"))
-	       ,(make-taubatron-form start end))))))
+	       (div
+		(@ (class "centering"))
+		,(make-taubatron-form start end)))))))
 
 (define taubatron-meta-column
   (let* ((handle (open-input-file "about.html"))
@@ -165,7 +167,9 @@ exec guile -s $0 $@ 2>>guile-error.log
 			     ,(->string (car char))))
 		    word)))
 	   (annotate-word-sequence path)))
-	,(make-tweet-button path)))
+	(div (@ (class "centering"))
+	     (div
+	      ,(make-tweet-button path)))))
 
 (define (make-taubatron-form start end)
   (let ((input? (and (string? start) (string? end))))
@@ -179,16 +183,16 @@ exec guile -s $0 $@ 2>>guile-error.log
 		    "Error:"
 		    (p ,msg))))
 	  "")
-      (form (@ (method "post")
-	       (action "taubatron"))
-	    "Transform"
-	     (input (@ (type "text")
-		       (name "start")))
-	     "into"
-	     (input (@ (type "text")
-		       (name "end")))
-	     (input (@ (type "submit")
-		       (value "Go")))))))
+      (div (form (@ (method "post")
+		    (action "taubatron"))
+		 "Transform"
+		 (input (@ (type "text")
+			   (name "start")))
+		 "into"
+		 (input (@ (type "text")
+			   (name "end")))
+		 (input (@ (type "submit")
+			   (value "Go"))))))))
 
 (define (list->assoc-pair lst)
   (if (null? (cdr lst))

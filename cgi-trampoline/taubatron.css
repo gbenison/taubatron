@@ -3,17 +3,50 @@ body {
     margin-right:   5%;
 }
 
+/*
+ Reference:
+ http://matthewjamestaylor.com/blog/beautiful-css-centered-menus-no-hacks-full-cross-browser-support
+ */
+.centering {
+    position:       relative;
+    float:          left;
+    clear:          left;
+    width:          100%;
+}
+
+.centering > * {
+    position:       relative;
+    float:          left;
+    clear:          left;
+    left:           50%;
+}
+
+.centering > * > * {
+    position:       relative;
+    float:          left;
+    clear:          left;
+    right:          50%;
+    display:        block;
+}
+
 div#header {
     border-bottom:   2px solid black;
 }
 
-#header h1 a {
+#header h1 {
     font-family:     "Andale Mono",monospace;
+    color:           black;
+    font-size:       120%;
+    text-transform:  lowercase;
+}
+
+#header h1 a {
     text-transform:  uppercase;
     letter-spacing:  10px;
     text-decoration: none;
+    font-family:     "Andale Mono",monospace;
     color:           black;
-    font-size:       120%;
+    font-size:       180%;
 }
 
 #credits {
@@ -62,17 +95,18 @@ div#right-column {
 
 div#result {
     margin-bottom:   2em;
+    margin:          0;
+    padding:         0;
 }
 
 div#result ul {
-    padding:          0.5em;
+    padding:          1.5em;
     text-transform:   uppercase;
-    text-align:       center;
+    text-align:       left;
     font-family:      courier,monospace;
     font-weight:      bold;
     font-size:        150%;
-    width:            10em;
-    border:           2px #dddddd solid;
+/*    border:           2px #dddddd solid; */
     list-style-type:  none;
 }
 
