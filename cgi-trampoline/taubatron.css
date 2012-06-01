@@ -49,6 +49,11 @@ div#header {
     font-size:       180%;
 }
 
+/* Custom colors for parts of the title word. */
+.t_color { color: #d21521; }
+.o_color { color: #f62892; }
+.n_color { color: #b4226c; }
+
 #credits {
     list-style:     none;
     padding:        0.2em;
@@ -65,6 +70,10 @@ div#left-column {
     position:  relative;
     width:     30%;
     padding:   1em;
+}
+
+#yesnomorph {
+    margin-bottom: 2em;
 }
 
 div#right-column {

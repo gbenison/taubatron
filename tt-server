@@ -22,8 +22,8 @@ export GUILE_LOAD_PATH=$GUILE_LOAD_PATH:`pwd`;
 export LTDL_LIBRARY_PATH=$LTDL_LIBRARY_PATH:`pwd`;
 export GUILE_WARN_DEPRECATED=no;
 # exec guile -s $0 2>/dev/null
-# exec guile --listen -s $0 $@ 2>>guile-error.log
-exec guile -s $0 $@ 2>>guile-error.log
+exec guile --listen -s $0 $@ 2>>guile-error.log
+# exec guile -s $0 $@ 2>>guile-error.log
 
 !#
 
@@ -126,6 +126,30 @@ exec guile -s $0 $@ 2>>guile-error.log
 	  (class "twitter-share-button"))
        "Tweet this result")))
 
+;;
+;; Create a procedure that transforms a string
+;; into a list of either:
+;; one-character strings, or spans containing
+;; one character with a class supplied by
+;; 'classes', a mapping from characters to class
+;; names.
+;;
+(define (word-apply-classes classes)
+  (lambda (word)
+    (map
+     (lambda (c)
+       (let ((class (assoc-ref classes (char-downcase c)))
+	     (str (list->string (list c))))
+	 (if class
+	     `(span (@ (class ,class)) ,str)
+	     str)))
+     (string->list word))))
+
+(define taubatron-classes
+  (word-apply-classes '((#\t . "t_color")
+			(#\o . "o_color")
+			(#\n . "n_color"))))
+
 (define (make-taubatron-reply start end)
   `(html
     (head
@@ -139,7 +163,8 @@ exec guile -s $0 $@ 2>>guile-error.log
      (@ (onload "tweetinit()"))
      (div (@ (id "header"))
 	  (h1 "The "
-	      (a (@ (href "taubatron")) "Taubatron")))
+	      (a (@ (href "taubatron"))
+		 ,(taubatron-classes "taubatron"))))
      (div (@ (id "content"))
 	  (div (@ (id "left-column"))
 	       ,(taubatron-meta-column))
