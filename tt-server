@@ -204,9 +204,9 @@ exec guile --listen -s $0 $@ 2>>guile-error.log
 	    (lambda ()
 	      (path->sxml (find-path start end)))
 	    (lambda (key proc msg . args)
-	      `(div (@ (class "error"))
-		    "Error:"
-		    (p ,msg))))
+	      `(div (div (@ (class "error"))
+			 "Error:"
+			 (p ,msg)))))
 	  "")
       (div (form (@ (method "post")
 		    (action "taubatron"))

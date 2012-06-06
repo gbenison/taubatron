@@ -52,7 +52,8 @@ div#header {
 /* Custom colors for parts of the title word. */
 .t_color { color: #d21521; }
 .o_color { color: #f62892; }
-.n_color { color: #b4226c; }
+.n_color { color: #f62892; }
+/* .n_color { color: #b4226c; } */
 
 #credits {
     list-style:     none;
